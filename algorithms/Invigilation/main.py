@@ -440,14 +440,22 @@ def assign_ics(master_map):
 
             left_course = master_map[room][time_slot_key]["left_course"]
             right_course = master_map[room][time_slot_key]["right_course"]
-
+            left_invigilator = master_map[room][time_slot_key]["left_invigilator"]
+            right_invigilator = master_map[room][time_slot_key]["right_invigilator"]
+          
             if (left_course is not None) and (left_course.code not in ic_assigned_set):
                 ic_assigned_set.add(left_course.code)
 
-                if left_course.ic is not None:
-                    master_map[room][time_slot_key]["left_invigilator"] = left_course.ic
-                    left_course.ic.duties.append(
-                        Duty(room, left_course, start, end))
+                if (left_course.ic is not None):
+                    if (left_invigilator is not None) and (left_invigilator != left_course.ic):
+                        left_course.ic.duties.append(
+                            Duty("TBA", left_course, start, end))
+
+                    elif (left_invigilator is None):
+                        print(f"No invigilator found for course {left_course.code} in room {room}, assigning IC...")
+                        master_map[room][time_slot_key]["left_invigilator"] = left_course.ic
+                        left_course.ic.duties.append(
+                            Duty(room, left_course, start, end))
 
                 else:
                     print(
@@ -456,10 +464,16 @@ def assign_ics(master_map):
             if (right_course is not None) and (right_course.code not in ic_assigned_set):
                 ic_assigned_set.add(right_course.code)
 
-                if right_course.ic is not None:
-                    master_map[room][time_slot_key]["right_invigilator"] = right_course.ic
-                    right_course.ic.duties.append(
-                        Duty(room, right_course, start, end))
+                if (right_course.ic is not None):
+                    if (right_invigilator is not None) and (right_invigilator != right_course.ic):
+                        right_course.ic.duties.append(
+                            Duty("TBA", right_course, start, end))
+
+                    elif (right_invigilator is None):
+                        print(f"No invigilator found for course {right_course.code} in room {room}, assigning IC...")
+                        master_map[room][time_slot_key]["right_invigilator"] = right_course.ic
+                        right_course.ic.duties.append(
+                            Duty(room, right_course, start, end))
 
                 else:
                     print(
@@ -681,6 +695,7 @@ def export_csv(invigilator_list, file_name):
             print("Could not assign", invigilator)
 
     f.close()
+    print("CSV File Exported Successfully")
 
 
 def start_invigilation_process(faculty_csv, scholar_csv, chamber_csv, course_teacher_csv, leaves_csv, max_duties_csv, room_allotment_csv, reserve_duties, big_course_cutoffs):
@@ -713,11 +728,11 @@ def start_invigilation_process(faculty_csv, scholar_csv, chamber_csv, course_tea
 
     master_map = get_master_map(course_list, room_allotment_csv)
 
-    assign_ics(master_map)
-
     assign_course_faculty(master_map)
 
     assign_invigilators(master_map, invigilator_list)
+
+    assign_ics(master_map)
 
     assign_big_course_invigilators(master_map, invigilator_list, big_course_cutoffs)
 
